@@ -4,30 +4,50 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/proto"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/xpzouying/xiaohongshu-mcp/humanize"
 )
 
 // PublishVideoContent 发布视频内容
 type PublishVideoContent struct {
-	Title     string
-	Content   string
-	Tags      []string
-	VideoPath string
+	Title        string
+	Content      string
+	Tags         []string
+	VideoPath    string
+	ScheduleTime *time.Time // 定时发布时间，nil 表示立即发布
+	IsOriginal   bool       // 是否声明原创
+	Visibility   string     // 可见范围: "公开可见"(默认), "仅自己可见", "仅互关好友可见"
+	Products     []string   // 商品关键词列表，用于绑定带货商品
 }
 
-// NewPublishVideoAction 进入发布页并切换到“上传视频”
+// NewPublishVideoAction 进入发布页并切换到"上传视频"
 func NewPublishVideoAction(page *rod.Page) (*PublishAction, error) {
 	pp := page.Timeout(300 * time.Second)
 
-	pp.MustNavigate(urlOfPublic).MustWaitIdle().MustWaitDOMStable()
+	if err := ensureCreatorSession(pp); err != nil {
+		return nil, err
+	}
+
+	if err := pp.Navigate(urlOfPublic); err != nil {
+		return nil, errors.Wrap(err, "导航到发布页面失败")
+	}
+
+	// 使用 WaitLoad 代替 WaitIdle（更宽松）
+	if err := pp.WaitLoad(); err != nil {
+		logrus.Warnf("等待页面加载出现问题: %v，继续尝试", err)
+	}
+	time.Sleep(2 * time.Second)
+
+	if err := pp.WaitDOMStable(time.Second, 0.1); err != nil {
+		logrus.Warnf("等待 DOM 稳定出现问题: %v，继续尝试", err)
+	}
 	time.Sleep(1 * time.Second)
 
-	if err := mustClickPublishTab(page, "上传视频"); err != nil {
+	if err := mustClickPublishTab(pp, "上传视频"); err != nil {
 		return nil, errors.Wrap(err, "切换到上传视频失败")
 	}
 
@@ -42,13 +62,14 @@ func (p *PublishAction) PublishVideo(ctx context.Context, content PublishVideoCo
 		return errors.New("视频不能为空")
 	}
 
-	page := p.page.Context(ctx)
+	// 重设超时：.Context(ctx) 会替换掉 NewPublishVideoAction 里 Timeout(300s) 的 deadline
+	page := p.page.Context(ctx).Timeout(300 * time.Second)
 
 	if err := uploadVideo(page, content.VideoPath); err != nil {
 		return errors.Wrap(err, "小红书上传视频失败")
 	}
 
-	if err := submitPublishVideo(page, content.Title, content.Content, content.Tags); err != nil {
+	if err := submitPublishVideo(ctx, page, content.Title, content.Content, content.Tags, content.ScheduleTime, content.IsOriginal, content.Visibility, content.Products); err != nil {
 		return errors.Wrap(err, "小红书发布失败")
 	}
 	return nil
@@ -76,7 +97,7 @@ func uploadVideo(page *rod.Page, videoPath string) error {
 	fileInput.MustSetFiles(videoPath)
 
 	// 对于视频，等待发布按钮变为可点击即表示处理完成
-	btn, err := waitForPublishButtonClickable(pp)
+	btn, err := waitForPublishButtonClickable(pp, 10*time.Minute)
 	if err != nil {
 		return err
 	}
@@ -84,65 +105,63 @@ func uploadVideo(page *rod.Page, videoPath string) error {
 	return nil
 }
 
-// waitForPublishButtonClickable 等待发布按钮可点击
-func waitForPublishButtonClickable(page *rod.Page) (*rod.Element, error) {
-	maxWait := 10 * time.Minute
-	interval := 1 * time.Second
-	start := time.Now()
-	selector := "button.publishBtn"
-
-	slog.Info("开始等待发布按钮可点击(视频)")
-
-	for time.Since(start) < maxWait {
-		btn, err := page.Element(selector)
-		if err == nil && btn != nil {
-			// 可见性
-			vis, verr := btn.Visible()
-			if verr == nil && vis {
-				// 检查 disabled 属性
-				if disabled, _ := btn.Attribute("disabled"); disabled == nil {
-					// 再通过 class 名粗略判断不在禁用态
-					if cls, _ := btn.Attribute("class"); cls != nil && !strings.Contains(*cls, "disabled") {
-						return btn, nil
-					}
-					// 即使 class 包含 disabled，只要没有 disabled 属性，也尝试点击一次以确认
-					return btn, nil
-				}
-			}
-		}
-		time.Sleep(interval)
-	}
-	return nil, errors.New("等待发布按钮可点击超时")
-}
-
 // submitPublishVideo 填写标题、正文、标签并点击发布（等待按钮可点击后再提交）
-func submitPublishVideo(page *rod.Page, title, content string, tags []string) error {
+func submitPublishVideo(ctx context.Context, page *rod.Page, title, content string, tags []string, scheduleTime *time.Time, isOriginal bool, visibility string, products []string) error {
 	// 标题
-	titleElem := page.MustElement("div.d-input input")
-	titleElem.MustInput(title)
-	time.Sleep(1 * time.Second)
+	titleElem, err := page.Element("div.d-input input")
+	if err != nil {
+		return errors.Wrap(err, "查找标题输入框失败")
+	}
+	if err := humanize.Type(ctx, titleElem, title); err != nil {
+		return errors.Wrap(err, "输入标题失败")
+	}
+	humanize.Delay(ctx, humanize.AfterType)
 
 	// 正文 + 标签
-	if contentElem, ok := getContentElement(page); ok {
-		contentElem.MustInput(content)
-		inputTags(contentElem, tags)
-	} else {
-		return errors.New("没有找到内容输入框")
-	}
-
-	time.Sleep(1 * time.Second)
-
-	// 等待发布按钮可点击
-	btn, err := waitForPublishButtonClickable(page)
+	contentElem, err := getContentElement(page, contentElemTimeout)
 	if err != nil {
 		return err
 	}
-
-	// 点击发布
-	if err := btn.Click(proto.InputMouseButtonLeft, 1); err != nil {
-		return errors.Wrap(err, "点击发布按钮失败")
+	if err := humanize.Type(ctx, contentElem, content); err != nil {
+		return errors.Wrap(err, "输入正文失败")
+	}
+	tryRefocusTitle(page)
+	if err := inputTags(ctx, contentElem, tags); err != nil {
+		return err
 	}
 
-	time.Sleep(3 * time.Second)
-	return nil
+	humanize.Delay(ctx, humanize.AfterType)
+
+	// 处理定时发布
+	if scheduleTime != nil {
+		if err := setSchedulePublish(ctx, page, *scheduleTime); err != nil {
+			return errors.Wrap(err, "设置定时发布失败")
+		}
+		slog.Info("定时发布设置完成", "schedule_time", scheduleTime.Format("2006-01-02 15:04"))
+	}
+
+	// 设置可见范围
+	if err := setVisibility(page, visibility); err != nil {
+		return errors.Wrap(err, "设置可见范围失败")
+	}
+
+	// 处理原创声明：显式请求了原创但设置失败 → 报错中止，不静默发成非原创（避免"以为原创其实不是"）
+	if isOriginal {
+		if err := setOriginal(page); err != nil {
+			return errors.Wrap(err, "设置原创声明失败（已请求原创，中止发布）")
+		}
+		slog.Info("已声明原创")
+	}
+
+	// 绑定商品
+	if err := bindProducts(ctx, page, products); err != nil {
+		return errors.Wrap(err, "绑定商品失败")
+	}
+
+	if err := clickPublishButton(page); err != nil {
+		return err
+	}
+
+	// 校验发布真的成功（成功跳转离开发布页），未跳转判失败——消除假成功
+	return waitPublishSuccess(page, 15*time.Second)
 }

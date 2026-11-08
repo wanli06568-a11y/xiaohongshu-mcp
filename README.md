@@ -1,24 +1,49 @@
 # xiaohongshu-mcp
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-18-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-40-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-[![已捐赠](https://img.shields.io/badge/Donated-CNY%20200.00-brightgreen?style=flat-square)](./DONATIONS.md)
-[![获得赞赏](https://img.shields.io/badge/Received-CNY%20179.92-blue?style=flat-square)](./DONATIONS.md)
+[![善款已捐](https://img.shields.io/badge/善款已捐-CNY%202010.00-brightgreen?style=flat-square)](./DONATIONS.md)
+[![爱心汇聚](https://img.shields.io/badge/爱心汇聚-CNY%201624.21-blue?style=flat-square)](./DONATIONS.md)
 [![Docker Pulls](https://img.shields.io/docker/pulls/xpzouying/xiaohongshu-mcp?style=flat-square&logo=docker)](https://hub.docker.com/r/xpzouying/xiaohongshu-mcp)
 
-MCP for 小红书/xiaohongshu.com。
+MCP for 小红书 / xiaohongshu.com。让你的 AI 助手直接访问小红书数据。
 
-- 我的博客文章：[haha.ai/xiaohongshu-mcp](https://www.haha.ai/xiaohongshu-mcp)
+### 🚀 快速开始：选择最适合你的版本
 
-**遇到任何问题，务必要先看 [各种疑难杂症](https://github.com/xpzouying/xiaohongshu-mcp/issues/56)**。
+> [!IMPORTANT]
+> #### 🔥 方案 A：Openclaw 深度集成 (推荐给开发者)
+> - **Openclaw 太火啦 🔥🔥🔥 ，新增 Openclaw 支持，分为两种，请各位按需使用：**
+> - [xiaohongshu-mcp-skills](https://github.com/autoclaw-cc/xiaohongshu-mcp-skills)（适用于已部署完本项目的用户）
+> - [xiaohongshu-skills](https://github.com/autoclaw-cc/xiaohongshu-skills)（开箱即用版）
 
-上面的 **疑难杂症** 列表后，还是解决不了你的部署问题，那么强烈推荐使用我写的另外一个工具：[xpzouying/x-mcp](https://github.com/xpzouying/x-mcp)，这个工具不需要你进行部署，只需要通过浏览器插件就能驱动你的 MCP，对于非技术同学来说更加友好。
+> [!TIP]
+> #### ✨ 方案 B：x-mcp 浏览器插件版 (推荐给非技术同学 / 追求极简的用户)
+> - **不想折腾 Docker 或部署环境？试试：[xpzouying/x-mcp](https://github.com/xpzouying/x-mcp)**
+> - **零配置**：安装插件即用，无需任何代码、代理或复杂的环境配置。
+> - **安全稳定**：直接在常用浏览器 (Chrome/Edge) 及本地网络运行，无服务器 IP 风险，且能解决 90% 的部署报错。
+
+### 📖 相关资源
+
+- **我的博客文章**：[haha.ai/xiaohongshu-mcp](https://www.haha.ai/xiaohongshu-mcp)
+- **贡献指南**：[Contributing Guide](./CONTRIBUTING.md)
+
+### 🛠️ 疑难杂症
+
+如果您在部署传统 Docker 版本时遇到问题，**务必先查看：[各种疑难杂症 (Issues #56)](https://github.com/xpzouying/xiaohongshu-mcp/issues/56)**。
+
+> *提示：如果环境排查太耗时，切换到 [x-mcp 插件版](https://github.com/xpzouying/x-mcp) 通常是更高效的选择。*
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=xpzouying/xiaohongshu-mcp&type=Timeline)](https://www.star-history.com/#xpzouying/xiaohongshu-mcp&Timeline)
+<!-- 图表由 .github/workflows/star-history.yml 每周生成到 star-history 数据分支（star-history.com 托管图表因 GitHub API 限制已失效） -->
+<a href="https://www.star-history.com/#xpzouying/xiaohongshu-mcp&Timeline">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/xpzouying/xiaohongshu-mcp/star-history/assets/star-history-dark.svg" />
+    <img alt="Star History Chart" src="https://raw.githubusercontent.com/xpzouying/xiaohongshu-mcp/star-history/assets/star-history.svg" />
+  </picture>
+</a>
 
 ## 赞赏支持
 
@@ -210,6 +235,61 @@ https://github.com/user-attachments/assets/cc385b6c-422c-489b-a5fc-63e92c695b80
 
 </details>
 
+<details>
+<summary><b>9. 回复评论</b></summary>
+
+回复笔记下的指定评论，支持精准回复特定用户的评论。
+
+**功能说明：**
+
+- 回复指定笔记下的特定评论
+- 支持通过评论 ID 或用户 ID 定位目标评论
+- 需要提供 feed_id、xsec_token、comment_id/user_id 和回复内容
+
+**⚠️ 重要提示：**
+
+- 需要先登录才能使用此功能
+- comment_id 和 user_id 至少提供一个
+- 这些参数可以从帖子详情的评论列表中获取
+
+</details>
+
+<details>
+<summary><b>10. 点赞/取消点赞</b></summary>
+
+为笔记点赞或取消点赞，智能检测当前状态避免重复操作。
+
+**功能说明：**
+
+- 为指定笔记点赞或取消点赞
+- 智能检测：已点赞时跳过点赞，未点赞时跳过取消点赞
+- 需要提供 feed_id 和 xsec_token
+
+**⚠️ 重要提示：**
+
+- 需要先登录才能使用此功能
+- 默认为点赞操作，设置 unlike=true 可取消点赞
+
+</details>
+
+<details>
+<summary><b>11. 收藏/取消收藏</b></summary>
+
+收藏笔记或取消收藏，智能检测当前状态避免重复操作。
+
+**功能说明：**
+
+- 收藏指定笔记或取消收藏
+- 智能检测：已收藏时跳过收藏，未收藏时跳过取消收藏
+- 需要提供 feed_id 和 xsec_token
+
+**⚠️ 重要提示：**
+
+- 需要先登录才能使用此功能
+- 默认为收藏操作，设置 unfavorite=true 可取消收藏
+
+</details>
+
 **小红书基础运营知识**
 
 - **标题：（非常重要）小红书要求标题不超过 20 个字**
@@ -219,11 +299,15 @@ https://github.com/user-attachments/assets/cc385b6c-422c-489b-a5fc-63e92c695b80
 - Tags：现已支持。添加合适的 Tags 能带来更多的流量。
 - 根据本人实操，小红书每天的发帖量应该是 **50 篇**。
 - **（非常重要）小红书的同一个账号不允许在多个网页端登录**，如果你登录了当前 xiaohongshu-mcp 后，就不要再在其他的网页端登录该账号，否则就会把当前 MCP 的账号“踢出登录”。你可以使用移动 App 端进行查看当前账号信息。
+- 曝光低的话，首先查看内容中是否有违禁词，搜一下有很多第三方免费工具。
+- 一定不要出现引流、纯搬运的情况，属于官方重点打击对象。
 
 **风险说明**
 
 1. 该项目是在自己的另外一个项目的基础上开源出来的，原来的项目稳定运行一年多，没有出现过封号的情况，只有出现过 Cookies 过期需要重新登录。
 2. 我是使用 Claude Code 接入，稳定自动化运营数周后，验证没有问题后开源。
+3. 如果账号没有实名认证，特别是新号，一般会触发 **实名认证** 的消息提醒（参见下图）。⚠️ 这个不是封号，不用 MCP 也会要求实名认证。实名认证后，账号就正常了。建议使用该项目前就先实名。
+   <img width="508" height="306" alt="image" src="https://github.com/user-attachments/assets/34383e1b-f666-409f-9870-002655507dc1" />
 
 该项目是基于学习的目的，禁止一切违法行为。
 
@@ -250,16 +334,16 @@ https://github.com/user-attachments/assets/cc385b6c-422c-489b-a5fc-63e92c695b80
 **主程序（MCP 服务）：**
 
 - **macOS Apple Silicon**: `xiaohongshu-mcp-darwin-arm64`
-- **macOS Intel**: `xiaohongshu-mcp-darwin-amd64`
 - **Windows x64**: `xiaohongshu-mcp-windows-amd64.exe`
 - **Linux x64**: `xiaohongshu-mcp-linux-amd64`
 
 **登录工具：**
 
 - **macOS Apple Silicon**: `xiaohongshu-login-darwin-arm64`
-- **macOS Intel**: `xiaohongshu-login-darwin-amd64`
 - **Windows x64**: `xiaohongshu-login-windows-amd64.exe`
 - **Linux x64**: `xiaohongshu-login-linux-amd64`
+
+> 目前支持以上三个平台。macOS Intel 与 Linux ARM64 暂不支持。
 
 使用步骤：
 
@@ -299,64 +383,32 @@ go env -w  GOPROXY=https://goproxy.io,direct
 
 </details>
 
-**方式三：使用 Docker 容器（最简单）**
+**方式三：使用 Docker 容器**
 
-<details>
-<summary>Docker 部署详情</summary>
+默认推荐无界面版；需要查看浏览器或短暂人工辅助时，选择 GUI 版。
 
-使用 Docker 部署是最简单的方式，无需安装任何开发环境。
+| 部署方式 | 适用场景 | 镜像标签 |
+| --- | --- | --- |
+| 无界面（默认） | 日常 MCP 自动化，镜像更小 | `latest`、`vX.Y.Z` |
+| GUI（noVNC，可选） | 查看登录页面、排查现场、辅助输入或选择素材 | `novnc`、`vX.Y.Z-novnc` |
 
-**1. 从 Docker Hub 拉取镜像（推荐）**
-
-我们提供了预构建的 Docker 镜像，可以直接从 Docker Hub 拉取使用：
-
-```bash
-# 拉取最新镜像
-docker pull xpzouying/xiaohongshu-mcp
-```
-
-Docker Hub 地址：[https://hub.docker.com/r/xpzouying/xiaohongshu-mcp](https://hub.docker.com/r/xpzouying/xiaohongshu-mcp)
-
-**2. 使用 Docker Compose 启动（推荐）**
-
-我们提供了配置好的 `docker-compose.yml` 文件，可以直接使用：
+在项目根目录执行，二选一：
 
 ```bash
-# 下载 docker-compose.yml
-wget https://raw.githubusercontent.com/xpzouying/xiaohongshu-mcp/main/docker/docker-compose.yml
-
-# 或者如果已经克隆了项目，进入 docker 目录
-cd docker
-
-# 启动服务
-docker compose up -d
-
-# 查看日志
-docker compose logs -f
-
-# 停止服务
-docker compose stop
+# 默认无界面版
+docker compose -f docker/docker-compose.yml up -d
 ```
-
-**3. 自己构建镜像（可选）**
 
 ```bash
-# 在项目根目录运行
-docker build -t xpzouying/xiaohongshu-mcp .
+# 可选 GUI 版
+docker compose -f docker/novnc/compose.yml up -d
 ```
 
-**4. 配置说明**
+GUI 启动后打开 [浏览器桌面](http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale)。两种部署的 MCP 地址均为 `http://127.0.0.1:18060/mcp`。
 
-Docker 版本会自动：
+GUI 无独立密码，仅限本机或 SSH 转发访问，**不要直接暴露公网**。切换部署前先停止旧实例。
 
-- 配置 Chrome 浏览器和中文字体
-- 挂载 `./data` 用于存储 cookies
-- 挂载 `./images` 用于存储发布的图片
-- 暴露 18060 端口供 MCP 连接
-
-详细使用说明请参考：[Docker 部署指南](./docker/README.md)
-
-</details>
+详细步骤、镜像源和数据目录配置见 [Docker 部署指南](./docker/README.md) 与 [GUI 部署指南](./docker/novnc/README.md)。
 
 Windows 遇到问题首先看这里：[Windows 安装指南](./docs/windows_guide.md)
 
@@ -401,6 +453,49 @@ go run .
 go run . -headless=false
 ```
 
+**配置代理（可选）**：
+
+如果需要通过代理访问，可以设置 `XHS_PROXY` 环境变量：
+
+```bash
+# 设置代理后启动
+XHS_PROXY=http://user:pass@proxy:port ./xiaohongshu-mcp-darwin-arm64
+
+# 或使用源码
+XHS_PROXY=http://proxy:port go run .
+```
+
+支持 HTTP/HTTPS/SOCKS5 代理，日志中会自动隐藏代理的认证信息。
+
+**访问鉴权（可选）**：
+
+默认关闭鉴权。生产环境建议使用 `AUTH_TOKEN` 环境变量配置；非空的启动参数优先于环境变量，留空则读取 `AUTH_TOKEN`。
+
+```bash
+# 环境变量
+AUTH_TOKEN=your-secret-token ./xiaohongshu-mcp-darwin-arm64
+AUTH_TOKEN=your-secret-token go run .
+
+# 非空启动参数（优先于环境变量）
+./xiaohongshu-mcp-darwin-arm64 -token=your-secret-token
+go run . -token=your-secret-token
+```
+
+启用鉴权后，所有 MCP 客户端都必须配置自定义请求头 `Authorization: Bearer <token>`。命令行参数可能被进程列表看到，部署环境优先使用 `AUTH_TOKEN`。
+
+例如，支持自定义请求头的 MCP 客户端可使用以下配置：
+
+```json
+{
+  "mcpServers": {
+    "xiaohongshu-mcp": {
+      "url": "http://localhost:18060/mcp",
+      "headers": { "Authorization": "Bearer your-secret-token" }
+    }
+  }
+}
+```
+
 ## 1.4. 验证 MCP
 
 ```bash
@@ -411,7 +506,9 @@ npx @modelcontextprotocol/inspector
 
 运行后，打开红色标记的链接，配置 MCP inspector，输入 `http://localhost:18060/mcp` ，点击 `Connect` 按钮。
 
-![配置 MCP inspector](./assets/inspect_mcp.png)
+<img width="915" height="659" alt="bf9532dd0b7ba423491accf511a467de" src="https://github.com/user-attachments/assets/08bc3cef-73e7-42d2-b923-7ba9e6c8af30" />
+
+**注意：** 左侧边框中的选项是否正确。
 
 按照上面配置 MCP inspector 后，点击 `List Tools` 按钮，查看所有的 Tools。
 
@@ -457,6 +554,7 @@ go run . -headless=false
 # 测试 MCP 连接
 curl -X POST http://localhost:18060/mcp \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-token" \
   -d '{"jsonrpc":"2.0","method":"initialize","params":{},"id":1}'
 ```
 
@@ -483,6 +581,51 @@ claude mcp add --transport http xiaohongshu-mcp http://localhost:18060/mcp
 
 # 检查 MCP 是否添加成功（确保 MCP 已经启动的前提下，运行下面命令）
 claude mcp list
+```
+
+</details>
+
+<details>
+<summary><b>Open Code CLI</b></summary>
+
+使用交互式命令添加 MCP Server：
+
+```bash
+opencode mcp add
+```
+
+以添加 `xiaohongshu-mcp` 为例：
+
+```
+┌  Add MCP server
+│
+◇  Enter MCP server name
+│  xiaohongshu-mcp
+│
+◇  Select MCP server type
+│  Remote
+│
+◇  Enter MCP server URL
+│  http://localhost:18060/mcp
+│
+◇  Does this server require OAuth authentication?
+│  No
+│
+◆  MCP server "xiaohongshu-mcp" added to C:\Users\admin\.config\opencode\opencode.json
+│
+└  MCP server added successfully
+```
+
+验证是否添加成功（确保 MCP 已启动的前提下）：
+
+```bash
+opencode mcp list
+```
+
+```
+┌  MCP Servers
+│
+●  ✓ xiaohongshu-mcp connected
 ```
 
 </details>
@@ -609,7 +752,7 @@ npx @modelcontextprotocol/inspector
 
 - 使用 MCP Inspector 测试连接
 - 测试 Ping Server 功能验证连接
-- 检查 List Tools 是否返回 6 个工具
+- 检查 List Tools 是否返回 13 个工具
 
 </details>
 
@@ -665,7 +808,28 @@ Cline 是一个强大的 AI 编程助手，支持 MCP 协议集成。
 ```
 
 </details>
+<details>
+<summary><b>OpenClaw（通过 MCPorter）</b></summary>
 
+> 使用前请确保 xiaohongshu-mcp 已完成本地部署。**不建议**将 GitHub 链接直接丢给 OpenClaw 让其代为部署。
+
+由于 OpenClaw 目前不原生支持 MCP，官方推荐通过 **MCPorter** 来调用 MCP 服务。
+
+> 💡 **提示：** MCPorter 并非调用 MCP 的最佳方案，使用过程中可能出现一些兼容性问题，请知悉。
+
+#### 安装与配置步骤
+
+直接一次性将一下三行命令丢给 OpenClaw（可以是 Control UI、Telegram、Feishu等方式），Openclaw 会代为部署 MCPorter。
+
+```
+npm i -g mcporter
+npx mcporter config add xiaohongshu-mcp http://localhost:18060/mcp
+npx mcporter list xiaohongshu-mcp
+```
+
+完成上述步骤后，即可在 OpenClaw 中通过自然语言调用 xiaohongshu-mcp 的所有功能。
+
+</details>
 <details>
 <summary><b>其他支持 HTTP MCP 的客户端</b></summary>
 
@@ -688,15 +852,42 @@ Cline 是一个强大的 AI 编程助手，支持 MCP 协议集成。
 连接成功后，可使用以下 MCP 工具：
 
 - `check_login_status` - 检查小红书登录状态（无参数）
+- `get_login_qrcode` - 获取登录二维码，返回 Base64 图片和超时时间（无参数）
+- `delete_cookies` - 删除 cookies 文件，重置登录状态，删除后需要重新登录（无参数）
 - `publish_content` - 发布图文内容到小红书（必需：title, content, images）
-  - `images`: 支持 HTTP 链接或本地绝对路径，推荐使用本地路径
+  - `images`: 图片路径列表（至少1张），支持 HTTP 链接或本地绝对路径，推荐使用本地路径
+  - `tags`: 话题标签列表（可选），如 `["美食", "旅行", "生活"]`
+  - `schedule_at`: 定时发布时间（可选），ISO8601 格式，支持 1 小时至 14 天内
+  - `is_original`: 是否声明原创（可选），默认不声明
+  - `visibility`: 可见范围（可选），支持 `公开可见`（默认）、`仅自己可见`、`仅互关好友可见`
+  - `products`: 商品关键词列表（可选），用于绑定带货商品。填写商品名称或商品ID，系统会自动搜索并选择第一个匹配结果。需账号已开通商品功能。示例: [面膜, 防晒霜SPF50]
 - `publish_with_video` - 发布视频内容到小红书（必需：title, content, video）
-  - `video`: 仅支持本地视频文件绝对路径
+  - `video`: 本地视频文件绝对路径（仅支持单个视频文件）
+  - `tags`: 话题标签列表（可选），如 `["美食", "旅行", "生活"]`
+  - `schedule_at`: 定时发布时间（可选），ISO8601 格式，支持 1 小时至 14 天内
+  - `visibility`: 可见范围（可选），支持 `公开可见`（默认）、`仅自己可见`、`仅互关好友可见`
+  - `products`: 商品关键词列表（可选），用于绑定带货商品。填写商品名称或商品ID，系统会自动搜索并选择第一个匹配结果。需账号已开通商品功能。示例: [面膜, 防晒霜SPF50]
 - `list_feeds` - 获取小红书首页推荐列表（无参数）
-- `search_feeds` - 搜索小红书内容（需要：keyword）
-- `get_feed_detail` - 获取帖子详情（需要：feed_id, xsec_token）
-- `post_comment_to_feed` - 发表评论到小红书帖子（需要：feed_id, xsec_token, content）
-- `user_profile` - 获取用户个人主页信息（需要：user_id, xsec_token）
+- `search_feeds` - 搜索小红书内容（必需：keyword）
+  - `filters`: 筛选选项（可选）
+    - `sort_by`: 排序依据 - `综合`（默认）| `最新` | `最多点赞` | `最多评论` | `最多收藏`
+    - `note_type`: 笔记类型 - `不限`（默认）| `视频` | `图文`
+    - `publish_time`: 发布时间 - `不限`（默认）| `一天内` | `一周内` | `半年内`
+    - `search_scope`: 搜索范围 - `不限`（默认）| `已看过` | `未看过` | `已关注`
+    - `location`: 位置距离 - `不限`（默认）| `同城` | `附近`
+- `get_feed_detail` - 获取帖子详情，包括互动数据和评论（必需：feed_id, xsec_token）
+  - `load_all_comments`: 是否加载全部评论（可选），默认 false 仅返回前 10 条一级评论
+  - `limit`: 限制加载的一级评论数量（可选），仅当 load_all_comments=true 时生效，默认 20
+  - `click_more_replies`: 是否展开二级回复（可选），仅当 load_all_comments=true 时生效，默认 false
+  - `reply_limit`: 跳过回复数过多的评论（可选），仅当 click_more_replies=true 时生效，默认 10
+  - `scroll_speed`: 滚动速度（可选），`slow` | `normal` | `fast`，仅当 load_all_comments=true 时生效
+- `post_comment_to_feed` - 发表评论到小红书帖子（必需：feed_id, xsec_token, content）
+- `reply_comment_in_feed` - 回复笔记下的指定评论（必需：feed_id, xsec_token, content，以及 comment_id 或 user_id 至少一个）
+- `like_feed` - 点赞/取消点赞（必需：feed_id, xsec_token）
+  - `unlike`: 是否取消点赞（可选），true 为取消点赞，默认为点赞
+- `favorite_feed` - 收藏/取消收藏（必需：feed_id, xsec_token）
+  - `unfavorite`: 是否取消收藏（可选），true 为取消收藏，默认为收藏
+- `user_profile` - 获取用户个人主页信息（必需：user_id, xsec_token）
 
 ### 2.4. 使用示例
 
@@ -743,35 +934,49 @@ Cline 是一个强大的 AI 编程助手，支持 MCP 协议集成。
 
 ---
 
-**Q:** 为什么检查登录用户名显示 `xiaghgngshu-mcp`？  
+> ⚠️ 以下是使用 OpenClaw + MCPorter 时的已知风险，使用前请充分了解：
+
+- OpenClaw 的 AI 自动部署行为不在本项目的维护范围内，部署结果无法保证
+- MCPorter 作为中间层可能引入额外的兼容性问题，与 xiaohongshu-mcp 本身无关
+- 若遇到连接失败、工具调用异常等问题，请先排查 MCPorter 自身的配置，而非提交 Issue
+- 在提问社区或群组前，请先确认问题是否能在**不使用 OpenClaw** 的情况下复现
+
+如果你没有强烈的 OpenClaw 使用需求，强烈建议改用 [Claude Code CLI](#claude-code-cli)、[Cursor](#cursor) 或 [Cline](#cline) 等原生支持 HTTP MCP 的客户端，体验会更稳定。
+
+---
+
+**Q:** 为什么检查登录用户名显示 `xiaghgngshu-mcp`？
 **A:** 用户名是写死的。
 
 ---
 
-**Q:** 显示发布成功后，但实际上没有显示？  
-**A:** 排查步骤如下：  
-1. 使用 **非无头模式** 重新发布一次。  
-2. 更换 **不同的内容** 重新发布。  
-3. 登录网页版小红书，查看账号是否被 **风控限制网页版发布**。  
-4. 检查 **图片大小** 是否过大。  
-5. 确认 **图片路径中没有中文字符**。  
+**Q:** 显示发布成功后，但实际上没有显示？
+**A:** 排查步骤如下：
+
+1. 使用 **非无头模式** 重新发布一次。
+2. 更换 **不同的内容** 重新发布。
+3. 登录网页版小红书，查看账号是否被 **风控限制网页版发布**。
+4. 检查 **图片大小** 是否过大。
+5. 确认 **图片路径中没有中文字符**。
 6. 若使用网络图片地址，请确认 **图片链接可正常访问**。
 
 ---
 
-**Q:** 在设备上运行 MCP 程序出现闪退如何解决？  
-**A:**  
-1. 建议 **从源码安装**。  
-2. 或使用 **Docker 安装 xiaohongshu-mcp**，教程参考：  
-   - [使用 Docker 安装 xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp#:~:text=%E6%96%B9%E5%BC%8F%E4%B8%89%EF%BC%9A%E4%BD%BF%E7%94%A8%20Docker%20%E5%AE%B9%E5%99%A8%EF%BC%88%E6%9C%80%E7%AE%80%E5%8D%95%EF%BC%89)  
+**Q:** 在设备上运行 MCP 程序出现闪退如何解决？
+**A:**
+
+1. 建议 **从源码安装**。
+2. 或使用 **Docker 安装 xiaohongshu-mcp**，教程参考：
+   - [使用 Docker 安装 xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp#:~:text=%E6%96%B9%E5%BC%8F%E4%B8%89%EF%BC%9A%E4%BD%BF%E7%94%A8%20Docker%20%E5%AE%B9%E5%99%A8%EF%BC%88%E6%9C%80%E7%AE%80%E5%8D%95%EF%BC%89)
    - [X-MCP 项目页面](https://github.com/xpzouying/x-mcp/)
 
 ---
 
-**Q:** 使用 `http://localhost:18060/mcp` 进行 MCP 验证时提示无法连接？  
-**A:**  
-- 在 **Docker 环境** 下，请使用  
-  👉 [http://host.docker.internal:18060/mcp](http://host.docker.internal:18060/mcp)  
+**Q:** 使用 `http://localhost:18060/mcp` 进行 MCP 验证时提示无法连接？
+**A:**
+
+- 在 **Docker 环境** 下，请使用
+  👉 [http://host.docker.internal:18060/mcp](http://host.docker.internal:18060/mcp)
 - 在 **非 Docker 环境** 下，请使用 **本机 IPv4 地址** 访问。
 
 ---
@@ -795,13 +1000,21 @@ Cline 是一个强大的 AI 编程助手，支持 MCP 协议集成。
 
 **重要：在群里问问题之前，请一定要先仔细看完 README 文档以及查看 Issues。**
 
-<!-- 两列排布：飞书二群 | 微信群 -->
+### 微信群
+|                                                 微信群 26 群                                        |                                                 微信群 27 群                                         |
+| :------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------: |
+| <img src="https://raw.githubusercontent.com/ltzteam/images/refs/heads/main/2.JPG" alt="WechatIMG119" width="300"> | <img src="https://raw.githubusercontent.com/ltzteam/images/refs/heads/main/3.JPG" alt="WechatIMG119" width="300"> |
 
-| 【飞书 3 群】：扫码进入                                                                                                   | 【微信群 10 群】：扫码进入                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| <img src="https://github.com/user-attachments/assets/9a0ec41a-cb65-4f4e-a0f7-31658a49512d" alt="qrcode_2qun" width="300"> | <img src="https://github.com/user-attachments/assets/b6a35560-5073-43be-9c65-2b2186136190" alt="WechatIMG119" width="300"> |
+### 飞书群
 
+|                                                         飞书 2 群                                                         |                                                         飞书 3 群                                                         |                                                         飞书 4 群                                                         |                                                         飞书 5 群                                                         |
+| :-----------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/user-attachments/assets/4983ea42-ce5b-4e26-a8c0-33889093b579" alt="qr-feishu02" width="260"> | <img src="https://github.com/user-attachments/assets/c77b45da-6028-4d3a-b421-ccc6c7210695" alt="qr-feishu03" width="260"> | <img src="https://github.com/user-attachments/assets/c42f5595-71cd-4d9b-b7f8-0c333bd25e2b" alt="qr-feishu04" width="260"> | <img src="https://github.com/user-attachments/assets/c032801c-bf02-4e8e-81ad-fb8471b3d765" alt="qr-feishu05" width="260"> |
 
+> **注意：**
+>
+> 1. 微信群的二维码有时间限制，有时候忘记更新，麻烦等待更新或者提交 Issue 催我更新。
+> 2. 飞书群，如果有的群满了，可以尝试扫一下另外一个群，总有坑位。
 
 ## 🙏 致谢贡献者 ✨
 
@@ -835,6 +1048,34 @@ Cline 是一个强大的 AI 编程助手，支持 MCP 协议集成。
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hrz394943230"><img src="https://avatars.githubusercontent.com/u/28583005?v=4?s=100" width="100px;" alt="hrz"/><br /><sub><b>hrz</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=hrz394943230" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ctrlz526"><img src="https://avatars.githubusercontent.com/u/143257420?v=4?s=100" width="100px;" alt="Ctrlz"/><br /><sub><b>Ctrlz</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=ctrlz526" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/flippancy"><img src="https://avatars.githubusercontent.com/u/6467703?v=4?s=100" width="100px;" alt="flippancy"/><br /><sub><b>flippancy</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=flippancy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Infinityay"><img src="https://avatars.githubusercontent.com/u/103165980?v=4?s=100" width="100px;" alt="Yuhang Lu"/><br /><sub><b>Yuhang Lu</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=Infinityay" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://triepod.ai"><img src="https://avatars.githubusercontent.com/u/199543909?v=4?s=100" width="100px;" alt="Bryan Thompson"/><br /><sub><b>Bryan Thompson</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=bryankthompson" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.megvii.com"><img src="https://avatars.githubusercontent.com/u/7806992?v=4?s=100" width="100px;" alt="tan jun"/><br /><sub><b>tan jun</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=tanxxjun321" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/coldmountein"><img src="https://avatars.githubusercontent.com/u/95873096?v=4?s=100" width="100px;" alt="coldmountain"/><br /><sub><b>coldmountain</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=coldmountein" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.litpp.com/"><img src="https://avatars.githubusercontent.com/u/44826388?v=4?s=100" width="100px;" alt="mamage"/><br /><sub><b>mamage</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=yqdaddy" title="Code">💻</a> <a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=yqdaddy" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://runyang.vercel.app/"><img src="https://avatars.githubusercontent.com/u/54588936?v=4?s=100" width="100px;" alt="Runyang YOU"/><br /><sub><b>Runyang YOU</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=YRYangang" title="Code">💻</a> <a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=YRYangang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.hnfnu.edu.cn/"><img src="https://avatars.githubusercontent.com/u/134906805?v=4?s=100" width="100px;" alt="e0_7"/><br /><sub><b>e0_7</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=Daily-AC" title="Code">💻</a> <a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=Daily-AC" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/prehisle"><img src="https://avatars.githubusercontent.com/u/2081344?v=4?s=100" width="100px;" alt="prehisle"/><br /><sub><b>prehisle</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=prehisle" title="Code">💻</a> <a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=prehisle" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/blablabiu"><img src="https://avatars.githubusercontent.com/u/123888078?v=4?s=100" width="100px;" alt="Xinhao Chen"/><br /><sub><b>Xinhao Chen</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=blablabiu" title="Code">💻</a> <a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=blablabiu" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/qiuxsgit"><img src="https://avatars.githubusercontent.com/u/15036686?v=4?s=100" width="100px;" alt="qiuxsgit"/><br /><sub><b>qiuxsgit</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=qiuxsgit" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZhuYichuan"><img src="https://avatars.githubusercontent.com/u/7954801?v=4?s=100" width="100px;" alt="openlts"/><br /><sub><b>openlts</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=ZhuYichuan" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/galois1983"><img src="https://avatars.githubusercontent.com/u/80469442?v=4?s=100" width="100px;" alt="galois1983"/><br /><sub><b>galois1983</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=galois1983" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xPeiPeix"><img src="https://avatars.githubusercontent.com/u/42157266?v=4?s=100" width="100px;" alt="Peip"/><br /><sub><b>Peip</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=xPeiPeix" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhenzoo"><img src="https://avatars.githubusercontent.com/u/273501489?v=4?s=100" width="100px;" alt="zhenzoo"/><br /><sub><b>zhenzoo</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=zhenzoo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/eeeggplant"><img src="https://avatars.githubusercontent.com/u/73321941?v=4?s=100" width="100px;" alt="eggplant"/><br /><sub><b>eggplant</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=eeeggplant" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Iams4kura"><img src="https://avatars.githubusercontent.com/u/126048986?v=4?s=100" width="100px;" alt="s4kura"/><br /><sub><b>s4kura</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=Iams4kura" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Matrixqlc"><img src="https://avatars.githubusercontent.com/u/129405195?v=4?s=100" width="100px;" alt="Matrixqlc"/><br /><sub><b>Matrixqlc</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=Matrixqlc" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.zhihu.com/people/lim0-34"><img src="https://avatars.githubusercontent.com/u/39004676?v=4?s=100" width="100px;" alt="Qu Yuli"/><br /><sub><b>Qu Yuli</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=DLLXW" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ao-lj-ao"><img src="https://avatars.githubusercontent.com/u/287673796?v=4?s=100" width="100px;" alt="ao-lj-ao"/><br /><sub><b>ao-lj-ao</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=ao-lj-ao" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/CNQQC"><img src="https://avatars.githubusercontent.com/u/243505512?v=4?s=100" width="100px;" alt="CNQQC"/><br /><sub><b>CNQQC</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=CNQQC" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ACCLE123"><img src="https://avatars.githubusercontent.com/u/95094975?v=4?s=100" width="100px;" alt="ACCLE123"/><br /><sub><b>ACCLE123</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=ACCLE123" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/SamYunquChen"><img src="https://avatars.githubusercontent.com/u/106165995?v=4?s=100" width="100px;" alt="SamYunquChen"/><br /><sub><b>SamYunquChen</b></sub></a><br /><a href="https://github.com/xpzouying/xiaohongshu-mcp/commits?author=SamYunquChen" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -846,8 +1087,22 @@ Cline 是一个强大的 AI 编程助手，支持 MCP 协议集成。
 
 ### ✨ 特别感谢
 
-| 贡献者                                                                                                                      |
-| --------------------------------------------------------------------------------------------------------------------------- |
-| [<img src="https://avatars.githubusercontent.com/wanpengxie" width="100px;"><br>@wanpengxie](https://github.com/wanpengxie) |
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="20%"><a href="https://github.com/wanpengxie"><img src="https://avatars.githubusercontent.com/wanpengxie" width="130px;" alt="wanpengxie"/><br /><sub><b>@wanpengxie</b></sub></a></td>
+      <td align="center" valign="top" width="20%"><a href="https://github.com/tanxxjun321"><img src="https://avatars.githubusercontent.com/u/7806992?v=4" width="130px;" alt="tanxxjun321"/><br /><sub><b>@tanxxjun321</b></sub></a></td>
+      <td align="center" valign="top" width="20%"><a href="https://github.com/Angiin"><img src="https://avatars.githubusercontent.com/u/17389304?v=4" width="130px;" alt="Angiin"/><br /><sub><b>@Angiin</b></sub></a></td>
+    </tr>
+  </tbody>
+</table>
 
 本项目遵循 [all-contributors](https://github.com/all-contributors/all-contributors) 规范。欢迎任何形式的贡献！
+
+## 📄 许可证
+
+本项目采用 [Apache License 2.0](LICENSE) 开源。
+
+你可以自由地使用、修改和分发本项目，包括用于商业用途，只需保留原始的版权声明和许可证文件。详细条款以 [LICENSE](LICENSE) 文件为准。
+
+向本项目提交的贡献，默认按同一许可证授权。

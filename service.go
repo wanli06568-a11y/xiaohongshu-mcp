@@ -8,18 +8,20 @@ import (
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/mattn/go-runewidth"
 	"github.com/sirupsen/logrus"
 	"github.com/xpzouying/headless_browser"
 	"github.com/xpzouying/xiaohongshu-mcp/browser"
 	"github.com/xpzouying/xiaohongshu-mcp/configs"
 	"github.com/xpzouying/xiaohongshu-mcp/cookies"
 	"github.com/xpzouying/xiaohongshu-mcp/pkg/downloader"
+	"github.com/xpzouying/xiaohongshu-mcp/pkg/xhsutil"
 	"github.com/xpzouying/xiaohongshu-mcp/xiaohongshu"
 )
 
 // XiaohongshuService 小红书业务服务
-type XiaohongshuService struct{}
+type XiaohongshuService struct {
+	logins loginSessions
+}
 
 // NewXiaohongshuService 创建小红书服务实例
 func NewXiaohongshuService() *XiaohongshuService {
@@ -28,16 +30,21 @@ func NewXiaohongshuService() *XiaohongshuService {
 
 // PublishRequest 发布请求
 type PublishRequest struct {
-	Title   string   `json:"title" binding:"required"`
-	Content string   `json:"content" binding:"required"`
-	Images  []string `json:"images" binding:"required,min=1"`
-	Tags    []string `json:"tags,omitempty"`
+	Title      string   `json:"title" binding:"required"`
+	Content    string   `json:"content" binding:"required"`
+	Images     []string `json:"images" binding:"required,min=1"`
+	Tags       []string `json:"tags,omitempty"`
+	ScheduleAt string   `json:"schedule_at,omitempty"` // 定时发布时间，ISO8601格式，为空则立即发布
+	IsOriginal bool     `json:"is_original,omitempty"` // 是否声明原创
+	Visibility string   `json:"visibility,omitempty"`  // 可见范围: "公开可见"(默认), "仅自己可见", "仅互关好友可见"
+	Products   []string `json:"products,omitempty"`    // 商品关键词列表，用于绑定带货商品
 }
 
 // LoginStatusResponse 登录状态响应
 type LoginStatusResponse struct {
 	IsLoggedIn bool   `json:"is_logged_in"`
-	Username   string `json:"username,omitempty"`
+	Username   string `json:"username,omitempty"` // 当前登录账号的昵称
+	UserID     string `json:"user_id,omitempty"`  // 用户唯一标识（个人主页 URL 中的 ID）
 }
 
 // LoginQrcodeResponse 登录扫码二维码
@@ -53,15 +60,18 @@ type PublishResponse struct {
 	Content string `json:"content"`
 	Images  int    `json:"images"`
 	Status  string `json:"status"`
-	PostID  string `json:"post_id,omitempty"`
 }
 
 // PublishVideoRequest 发布视频请求（仅支持本地单个视频文件）
 type PublishVideoRequest struct {
-	Title   string   `json:"title" binding:"required"`
-	Content string   `json:"content" binding:"required"`
-	Video   string   `json:"video" binding:"required"`
-	Tags    []string `json:"tags,omitempty"`
+	Title      string   `json:"title" binding:"required"`
+	Content    string   `json:"content" binding:"required"`
+	Video      string   `json:"video" binding:"required"`
+	Tags       []string `json:"tags,omitempty"`
+	ScheduleAt string   `json:"schedule_at,omitempty"` // 定时发布时间，ISO8601格式，为空则立即发布
+	IsOriginal bool     `json:"is_original,omitempty"` // 是否声明原创
+	Visibility string   `json:"visibility,omitempty"`  // 可见范围: "公开可见"(默认), "仅自己可见", "仅互关好友可见"
+	Products   []string `json:"products,omitempty"`    // 商品关键词列表，用于绑定带货商品
 }
 
 // PublishVideoResponse 发布视频响应
@@ -70,7 +80,6 @@ type PublishVideoResponse struct {
 	Content string `json:"content"`
 	Video   string `json:"video"`
 	Status  string `json:"status"`
-	PostID  string `json:"post_id,omitempty"`
 }
 
 // FeedsListResponse Feeds列表响应
@@ -110,7 +119,16 @@ func (s *XiaohongshuService) CheckLoginStatus(ctx context.Context) (*LoginStatus
 
 	response := &LoginStatusResponse{
 		IsLoggedIn: isLoggedIn,
-		Username:   configs.Username,
+	}
+
+	// 已登录时从当前页读取真实账号信息；读不到只记 warn，不影响状态返回。
+	if isLoggedIn {
+		if user, err := loginAction.CurrentUser(ctx); err != nil {
+			logrus.Warnf("failed to get current user info: %v", err)
+		} else {
+			response.Username = user.Nickname
+			response.UserID = user.UserID
+		}
 	}
 
 	return response, nil
@@ -119,19 +137,18 @@ func (s *XiaohongshuService) CheckLoginStatus(ctx context.Context) (*LoginStatus
 // GetLoginQrcode 获取登录的扫码二维码
 func (s *XiaohongshuService) GetLoginQrcode(ctx context.Context) (*LoginQrcodeResponse, error) {
 	b := newBrowser()
+	// 建页和取码都可能 panic。只有后台接手扫码后，才由它关闭浏览器。
+	handedOff := false
+	defer func() {
+		if !handedOff {
+			b.Close()
+		}
+	}()
+
 	page := b.NewPage()
-
-	deferFunc := func() {
-		_ = page.Close()
-		b.Close()
-	}
-
 	loginAction := xiaohongshu.NewLogin(page)
 
 	img, loggedIn, err := loginAction.FetchQrcodeImage(ctx)
-	if err != nil || loggedIn {
-		defer deferFunc()
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -139,17 +156,8 @@ func (s *XiaohongshuService) GetLoginQrcode(ctx context.Context) (*LoginQrcodeRe
 	timeout := 4 * time.Minute
 
 	if !loggedIn {
-		go func() {
-			ctxTimeout, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			defer deferFunc()
-
-			if loginAction.WaitForLogin(ctxTimeout) {
-				if er := saveCookies(page); er != nil {
-					logrus.Errorf("failed to save cookies: %v", er)
-				}
-			}
-		}()
+		s.waitScanInBackground(loginAction, page, b.Close, timeout)
+		handedOff = true
 	}
 
 	return &LoginQrcodeResponse{
@@ -164,30 +172,84 @@ func (s *XiaohongshuService) GetLoginQrcode(ctx context.Context) (*LoginQrcodeRe
 	}, nil
 }
 
+// waitScanInBackground 在后台等用户扫码，扫上了就存 cookie。
+//
+// 浏览器必须一直活着才检测得到扫码，所以这里不能提前关；但也不能任由它堆积——
+// 再取一次二维码就会把上一个还在等的会话关掉，同一时刻只留一个。
+func (s *XiaohongshuService) waitScanInBackground(
+	loginAction *xiaohongshu.LoginAction, page *rod.Page, closeBrowser func(), timeout time.Duration,
+) {
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), timeout)
+	seq := s.logins.start(cancel)
+	logrus.Infof("等待扫码登录，会话 #%d，超时 %s", seq, timeout)
+
+	go func() {
+		defer closeBrowser()
+		defer cancel()
+		defer s.logins.finish(seq)
+
+		if loginAction.WaitForLogin(ctxTimeout) {
+			if err := saveCookies(page); err != nil {
+				logrus.Errorf("扫码成功但保存 cookies 失败，会话 #%d: %v", seq, err)
+				return
+			}
+			logrus.Infof("扫码登录成功，cookies 已保存，会话 #%d", seq)
+			return
+		}
+
+		// 没等到扫码：要么超时，要么被新取的二维码取代
+		logrus.Infof("登录会话 #%d 结束，未检测到扫码（超时或已被新的二维码取代）", seq)
+	}()
+}
+
 // PublishContent 发布内容
 func (s *XiaohongshuService) PublishContent(ctx context.Context, req *PublishRequest) (*PublishResponse, error) {
-	// 验证标题长度
-	// 小红书限制：最大40个单位长度
-	// 中文/日文/韩文占2个单位，英文/数字占1个单位
-	if titleWidth := runewidth.StringWidth(req.Title); titleWidth > 40 {
+	// 验证标题长度（小红书限制：最大20个字）
+	if xhsutil.CalcTitleLength(req.Title) > 20 {
 		return nil, fmt.Errorf("标题长度超过限制")
 	}
 
-	// 处理图片：下载URL图片或使用本地路径
 	imagePaths, err := s.processImages(req.Images)
 	if err != nil {
 		return nil, err
 	}
 
-	// 构建发布内容
-	content := xiaohongshu.PublishImageContent{
-		Title:      req.Title,
-		Content:    req.Content,
-		Tags:       req.Tags,
-		ImagePaths: imagePaths,
+	var scheduleTime *time.Time
+	if req.ScheduleAt != "" {
+		t, err := time.Parse(time.RFC3339, req.ScheduleAt)
+		if err != nil {
+			return nil, fmt.Errorf("定时发布时间格式错误，请使用 ISO8601 格式: %v", err)
+		}
+
+		// 校验定时发布时间范围：1小时至14天
+		now := time.Now()
+		minTime := now.Add(1 * time.Hour)
+		maxTime := now.Add(14 * 24 * time.Hour)
+
+		if t.Before(minTime) {
+			return nil, fmt.Errorf("定时发布时间必须至少在1小时后，当前设置: %s，最早可选: %s",
+				t.Format("2006-01-02 15:04"), minTime.Format("2006-01-02 15:04"))
+		}
+		if t.After(maxTime) {
+			return nil, fmt.Errorf("定时发布时间不能超过14天，当前设置: %s，最晚可选: %s",
+				t.Format("2006-01-02 15:04"), maxTime.Format("2006-01-02 15:04"))
+		}
+
+		scheduleTime = &t
+		logrus.Infof("设置定时发布时间: %s", t.Format("2006-01-02 15:04"))
 	}
 
-	// 执行发布
+	content := xiaohongshu.PublishImageContent{
+		Title:        req.Title,
+		Content:      req.Content,
+		Tags:         req.Tags,
+		ImagePaths:   imagePaths,
+		ScheduleTime: scheduleTime,
+		IsOriginal:   req.IsOriginal,
+		Visibility:   req.Visibility,
+		Products:     req.Products,
+	}
+
 	if err := s.publishContent(ctx, content); err != nil {
 		logrus.Errorf("发布内容失败: title=%s %v", content.Title, err)
 		return nil, err
@@ -222,14 +284,13 @@ func (s *XiaohongshuService) publishContent(ctx context.Context, content xiaohon
 		return err
 	}
 
-	// 执行发布
 	return action.Publish(ctx, content)
 }
 
 // PublishVideo 发布视频（本地文件）
 func (s *XiaohongshuService) PublishVideo(ctx context.Context, req *PublishVideoRequest) (*PublishVideoResponse, error) {
-	// 标题长度校验
-	if titleWidth := runewidth.StringWidth(req.Title); titleWidth > 40 {
+	// 标题长度校验（小红书限制：最大20个字）
+	if xhsutil.CalcTitleLength(req.Title) > 20 {
 		return nil, fmt.Errorf("标题长度超过限制")
 	}
 
@@ -241,15 +302,42 @@ func (s *XiaohongshuService) PublishVideo(ctx context.Context, req *PublishVideo
 		return nil, fmt.Errorf("视频文件不存在或不可访问: %v", err)
 	}
 
-	// 构建发布内容
-	content := xiaohongshu.PublishVideoContent{
-		Title:     req.Title,
-		Content:   req.Content,
-		Tags:      req.Tags,
-		VideoPath: req.Video,
+	var scheduleTime *time.Time
+	if req.ScheduleAt != "" {
+		t, err := time.Parse(time.RFC3339, req.ScheduleAt)
+		if err != nil {
+			return nil, fmt.Errorf("定时发布时间格式错误，请使用 ISO8601 格式: %v", err)
+		}
+
+		// 校验定时发布时间范围：1小时至14天
+		now := time.Now()
+		minTime := now.Add(1 * time.Hour)
+		maxTime := now.Add(14 * 24 * time.Hour)
+
+		if t.Before(minTime) {
+			return nil, fmt.Errorf("定时发布时间必须至少在1小时后，当前设置: %s，最早可选: %s",
+				t.Format("2006-01-02 15:04"), minTime.Format("2006-01-02 15:04"))
+		}
+		if t.After(maxTime) {
+			return nil, fmt.Errorf("定时发布时间不能超过14天，当前设置: %s，最晚可选: %s",
+				t.Format("2006-01-02 15:04"), maxTime.Format("2006-01-02 15:04"))
+		}
+
+		scheduleTime = &t
+		logrus.Infof("设置定时发布时间: %s", t.Format("2006-01-02 15:04"))
 	}
 
-	// 执行发布
+	content := xiaohongshu.PublishVideoContent{
+		Title:        req.Title,
+		Content:      req.Content,
+		Tags:         req.Tags,
+		VideoPath:    req.Video,
+		ScheduleTime: scheduleTime,
+		IsOriginal:   req.IsOriginal,
+		Visibility:   req.Visibility,
+		Products:     req.Products,
+	}
+
 	if err := s.publishVideo(ctx, content); err != nil {
 		return nil, err
 	}
@@ -287,10 +375,8 @@ func (s *XiaohongshuService) ListFeeds(ctx context.Context) (*FeedsListResponse,
 	page := b.NewPage()
 	defer page.Close()
 
-	// 创建 Feeds 列表 action
 	action := xiaohongshu.NewFeedsListAction(page)
 
-	// 获取 Feeds 列表
 	feeds, err := action.GetFeedsList(ctx)
 	if err != nil {
 		logrus.Errorf("获取 Feeds 列表失败: %v", err)
@@ -328,18 +414,21 @@ func (s *XiaohongshuService) SearchFeeds(ctx context.Context, keyword string, fi
 }
 
 // GetFeedDetail 获取Feed详情
-func (s *XiaohongshuService) GetFeedDetail(ctx context.Context, feedID, xsecToken string) (*FeedDetailResponse, error) {
+func (s *XiaohongshuService) GetFeedDetail(ctx context.Context, feedID, xsecToken string, loadAllComments bool) (*FeedDetailResponse, error) {
+	return s.GetFeedDetailWithConfig(ctx, feedID, xsecToken, loadAllComments, xiaohongshu.DefaultCommentLoadConfig())
+}
+
+// GetFeedDetailWithConfig 使用配置获取Feed详情
+func (s *XiaohongshuService) GetFeedDetailWithConfig(ctx context.Context, feedID, xsecToken string, loadAllComments bool, config xiaohongshu.CommentLoadConfig) (*FeedDetailResponse, error) {
 	b := newBrowser()
 	defer b.Close()
 
 	page := b.NewPage()
 	defer page.Close()
 
-	// 创建 Feed 详情 action
 	action := xiaohongshu.NewFeedDetailAction(page)
 
-	// 获取 Feed 详情
-	result, err := action.GetFeedDetail(ctx, feedID, xsecToken)
+	result, err := action.GetFeedDetailWithConfig(ctx, feedID, xsecToken, loadAllComments, config)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +442,12 @@ func (s *XiaohongshuService) GetFeedDetail(ctx context.Context, feedID, xsecToke
 }
 
 // UserProfile 获取用户信息
-func (s *XiaohongshuService) UserProfile(ctx context.Context, userID, xsecToken string) (*UserProfileResponse, error) {
+func (s *XiaohongshuService) UserProfile(ctx context.Context, userID, xsecToken, tab string) (*UserProfileResponse, error) {
+	parsed, err := xiaohongshu.ParseProfileTab(tab)
+	if err != nil {
+		return nil, err
+	}
+
 	b := newBrowser()
 	defer b.Close()
 
@@ -362,7 +456,7 @@ func (s *XiaohongshuService) UserProfile(ctx context.Context, userID, xsecToken 
 
 	action := xiaohongshu.NewUserProfileAction(page)
 
-	result, err := action.UserProfile(ctx, userID, xsecToken)
+	result, err := action.UserProfile(ctx, userID, xsecToken, parsed)
 	if err != nil {
 		return nil, err
 	}
@@ -453,8 +547,83 @@ func (s *XiaohongshuService) UnfavoriteFeed(ctx context.Context, feedID, xsecTok
 	return &ActionResult{FeedID: feedID, Success: true, Message: "取消收藏成功或未收藏"}, nil
 }
 
+// ReplyCommentToFeed 回复指定评论
+func (s *XiaohongshuService) ReplyCommentToFeed(ctx context.Context, feedID, xsecToken, commentID, userID, content string) (*ReplyCommentResponse, error) {
+	b := newBrowser()
+	defer b.Close()
+
+	page := b.NewPage()
+	defer page.Close()
+
+	action := xiaohongshu.NewCommentFeedAction(page)
+
+	if err := action.ReplyToComment(ctx, feedID, xsecToken, commentID, userID, content); err != nil {
+		return nil, err
+	}
+
+	return &ReplyCommentResponse{
+		FeedID:          feedID,
+		TargetCommentID: commentID,
+		TargetUserID:    userID,
+		Success:         true,
+		Message:         "评论回复成功",
+	}, nil
+}
+
+// GetUnreadCount 获取通知未读数
+func (s *XiaohongshuService) GetUnreadCount(ctx context.Context) (*xiaohongshu.NotificationCount, error) {
+	b := newBrowser()
+	defer b.Close()
+
+	page := b.NewPage()
+	defer page.Close()
+
+	return xiaohongshu.NewNotificationAction(page).UnreadCount(ctx)
+}
+
+// ListNotifications 获取指定分区的通知列表
+func (s *XiaohongshuService) ListNotifications(ctx context.Context, tab string, limit int) (*xiaohongshu.NotificationList, error) {
+	parsed, err := xiaohongshu.ParseNotificationTab(tab)
+	if err != nil {
+		return nil, err
+	}
+
+	b := newBrowser()
+	defer b.Close()
+
+	page := b.NewPage()
+	defer page.Close()
+
+	return xiaohongshu.NewNotificationAction(page).List(ctx, parsed, limit)
+}
+
+// LikeNotification 给通知里的评论点赞或取消点赞
+func (s *XiaohongshuService) LikeNotification(ctx context.Context, commentID string, unlike bool) (*xiaohongshu.NotificationLikeResult, error) {
+	b := newBrowser()
+	defer b.Close()
+
+	page := b.NewPage()
+	defer page.Close()
+
+	return xiaohongshu.NewNotificationAction(page).Like(ctx, commentID, unlike)
+}
+
+// ReplyNotification 在通知页就地回复评论
+func (s *XiaohongshuService) ReplyNotification(ctx context.Context, commentID, content string) (*xiaohongshu.NotificationReplyResult, error) {
+	b := newBrowser()
+	defer b.Close()
+
+	page := b.NewPage()
+	defer page.Close()
+
+	return xiaohongshu.NewNotificationAction(page).Reply(ctx, commentID, content)
+}
+
 func newBrowser() *headless_browser.Browser {
-	return browser.NewBrowser(configs.IsHeadless(), browser.WithBinPath(configs.GetBinPath()))
+	return browser.NewBrowser(configs.IsHeadless(),
+		browser.WithFingerprintSeed(configs.FingerprintSeed()),
+		browser.WithProxy(configs.Proxy()),
+	)
 }
 
 func saveCookies(page *rod.Page) error {
@@ -484,13 +653,17 @@ func withBrowserPage(fn func(*rod.Page) error) error {
 }
 
 // GetMyProfile 获取当前登录用户的个人信息
-func (s *XiaohongshuService) GetMyProfile(ctx context.Context) (*UserProfileResponse, error) {
+func (s *XiaohongshuService) GetMyProfile(ctx context.Context, tab string) (*UserProfileResponse, error) {
+	parsed, err := xiaohongshu.ParseProfileTab(tab)
+	if err != nil {
+		return nil, err
+	}
+
 	var result *xiaohongshu.UserProfileResponse
-	var err error
 
 	err = withBrowserPage(func(page *rod.Page) error {
 		action := xiaohongshu.NewUserProfileAction(page)
-		result, err = action.GetMyProfileViaSidebar(ctx)
+		result, err = action.GetMyProfileViaSidebar(ctx, parsed)
 		return err
 	})
 

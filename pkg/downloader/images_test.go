@@ -1,6 +1,10 @@
 package downloader
 
 import (
+	"encoding/base64"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,9 +35,8 @@ func TestIsImageURL(t *testing.T) {
 }
 
 func TestNewImageDownloader(t *testing.T) {
-	tempDir := os.TempDir()
-	testPath := filepath.Join(tempDir, "test_downloader")
-	defer os.RemoveAll(testPath)
+	// 子目录尚不存在，用于验证 NewImageDownloader 会创建它；t.TempDir 自动清理。
+	testPath := filepath.Join(t.TempDir(), "test_downloader")
 
 	downloader := NewImageDownloader(testPath)
 
@@ -45,14 +48,13 @@ func TestNewImageDownloader(t *testing.T) {
 		t.Errorf("savePath = %q, expected %q", downloader.savePath, testPath)
 	}
 
-	// 验证目录是否创建
 	if _, err := os.Stat(testPath); os.IsNotExist(err) {
 		t.Errorf("save path directory was not created: %s", testPath)
 	}
 }
 
 func TestImageDownloader_isValidImageURL(t *testing.T) {
-	downloader := NewImageDownloader(os.TempDir())
+	downloader := NewImageDownloader(t.TempDir())
 
 	tests := []struct {
 		url      string
@@ -76,27 +78,68 @@ func TestImageDownloader_isValidImageURL(t *testing.T) {
 }
 
 func TestImageDownloader_generateFileName(t *testing.T) {
-	downloader := NewImageDownloader(os.TempDir())
+	downloader := NewImageDownloader(t.TempDir())
 
 	url := "https://example.com/image.jpg"
 	extension := "jpg"
 
 	fileName1 := downloader.generateFileName(url, extension)
 
-	// 文件名应该包含扩展名
 	if filepath.Ext(fileName1) != "."+extension {
 		t.Errorf("fileName should end with .%s, got %s", extension, fileName1)
 	}
 
-	// 文件名应该包含img_前缀
 	if !strings.HasPrefix(filepath.Base(fileName1), "img_") {
 		t.Errorf("fileName should start with img_, got %s", fileName1)
 	}
 
-	// 不同URL应该生成不同的文件名
 	url2 := "https://example.com/different.jpg"
 	fileName2 := downloader.generateFileName(url2, extension)
 	if fileName1 == fileName2 {
 		t.Errorf("different URLs should generate different file names")
+	}
+}
+
+// TestDownloadImage_SendsUAAndReferer 下载请求应带上 User-Agent 和 Referer。
+func TestDownloadImage_SendsUAAndReferer(t *testing.T) {
+	// 1x1 透明 PNG，避免依赖外部网络资源导致测试不稳定
+	const pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+2X8AAAAASUVORK5CYII="
+	pngData, err := base64.StdEncoding.DecodeString(pngBase64)
+	if err != nil {
+		t.Fatalf("解析测试图片失败: %v", err)
+	}
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("User-Agent"); got == "" {
+			http.Error(w, "missing user-agent", http.StatusForbidden)
+			return
+		}
+
+		expectedReferer := fmt.Sprintf("%s/", server.URL)
+		if got := r.Header.Get("Referer"); got != expectedReferer {
+			http.Error(w, "invalid referer", http.StatusForbidden)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(pngData)
+	}))
+	defer server.Close()
+
+	tempDir := t.TempDir()
+	downloader := NewImageDownloader(tempDir)
+
+	filePath, err := downloader.DownloadImage(server.URL + "/image.png")
+	if err != nil {
+		t.Fatalf("下载失败: %v", err)
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("文件不存在: %v", err)
+	}
+	if info.Size() == 0 {
+		t.Fatalf("下载文件为空")
 	}
 }
